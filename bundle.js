@@ -1,9 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-const tf = require('@tensorflow/tfjs');
-const Brain = require('./tfLoader').Brain;
-
-
-let predict;
+const server = require("./server").server;
 
 // converts an image located at url into it's base64 encoded representation. can be a local file or other file as long as the origin allows CORS
 var convertToBase64 = function (url) {
@@ -64,8 +60,6 @@ var sendBase64ToServer = function (base64) {
 };
 
 
-
-
 var addbase64ToPage = function(data) {
   var image = new Image();
   image.src = data;
@@ -86,7 +80,7 @@ const predictFromClick = async (event)=>{
   const hd64 = await convertToBase64(image);
   const time = Date.now();
   console.log('Predicting...')
-  const predictions = await predict(hd64);
+  const predictions = await server.predict(hd64);
   const duration = Date.now()-time;
   console.log(predictions)
   console.log(`Prediction completed in ${Math.floor(duration)}ms`);
@@ -106,10 +100,7 @@ const predictFromClick = async (event)=>{
 
 //console.log(mobilenet);
 window.onload = async ()=>{
-
-  const brain = new Brain();
-  await brain.loadTensor("mobilenet");
-  predict =  brain.predictFromBase64.bind(brain);
+  server.init();
   var huskyimg = document.createElement('img')
   huskyimg.src ='husky.jpg'
   document.body.appendChild(huskyimg)
@@ -124,7 +115,7 @@ window.onload = async ()=>{
 
 
 
-},{"./tfLoader":231,"@tensorflow/tfjs":210}],2:[function(require,module,exports){
+},{"./server":231}],2:[function(require,module,exports){
 "use strict";
 module.exports = asPromise;
 
@@ -2978,7 +2969,7 @@ function loadFrozenModel(modelUrl, weightsManifestUrl, requestOption) {
 }
 exports.loadFrozenModel = loadFrozenModel;
 
-},{"../data/compiled_api":9,"../operations/operation_mapper":42,"./graph_executor":12,"@tensorflow/tfjs-core":52,"url":238}],12:[function(require,module,exports){
+},{"../data/compiled_api":9,"../operations/operation_mapper":42,"./graph_executor":12,"@tensorflow/tfjs-core":52,"url":239}],12:[function(require,module,exports){
 "use strict";
 var __assign = (this && this.__assign) || Object.assign || function(t) {
     for (var s, i = 1, n = arguments.length; i < n; i++) {
@@ -7680,7 +7671,7 @@ function getOrMakeEnvironment() {
 exports.ENV = getOrMakeEnvironment();
 
 }).call(this,require('_process'))
-},{"./device_util":45,"./doc":46,"./engine":47,"./environment_util":49,"./tensor":159,"./tensor_util":161,"_process":233}],49:[function(require,module,exports){
+},{"./device_util":45,"./doc":46,"./engine":47,"./environment_util":49,"./tensor":159,"./tensor_util":161,"_process":234}],49:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var util_1 = require("./util");
@@ -38368,7 +38359,27 @@ if ((typeof module) == 'object' && module.exports) {
   Math    // math: package containing random, pow, and seedrandom
 );
 
-},{"crypto":232}],231:[function(require,module,exports){
+},{"crypto":233}],231:[function(require,module,exports){
+const Brain = require('./tfLoader').Brain;
+
+
+class Server {
+
+  async init(){
+    this.brain = new Brain();
+    await this.brain.loadTensor("mobilenet");
+  }
+
+  async predict(b64data){
+    const result = await this.brain.predictFromBase64(b64data);
+    return result;
+  }
+}
+
+const server = new Server();
+
+module.exports = {server}
+},{"./tfLoader":232}],232:[function(require,module,exports){
 // load different types of tensorflow models
 const tf = require('@tensorflow/tfjs');
 
@@ -38378,6 +38389,10 @@ const modelList = {
   mobilenet: {
     modelPath: "./tensorflowModels/mobilenet_v1_1.0_224/model.json",
     imageClasses: "./tensorflowModels/mobilenet_v1_1.0_224/imagenetClasses.json"
+  },
+
+  inception:{
+
   }
 };
 
@@ -38399,7 +38414,6 @@ class Brain {
     }
     const imageClassesJson = await fetch(modelList[modelName].imageClasses);
     this.imageClasses = await imageClassesJson.json();
-    console.log(this.imageClasses);
     const modelPath = modelList[modelName].modelPath;
 
     
@@ -38538,9 +38552,9 @@ module.exports = { Brain };
 //   'https://storage.googleapis.com/tfjs-models/savedmodel/';
 // const MODEL_FILE_URL = 'mobilenet_v2_1.0_224/tensorflowjs_model.pb';
 // const WEIGHT_MANIFEST_FILE_URL = 'mobilenet_v2_1.0_224/weights_manifest.json';
-},{"@tensorflow/tfjs":210}],232:[function(require,module,exports){
+},{"@tensorflow/tfjs":210}],233:[function(require,module,exports){
 
-},{}],233:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -38726,7 +38740,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],234:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -39263,7 +39277,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],235:[function(require,module,exports){
+},{}],236:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -39349,7 +39363,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],236:[function(require,module,exports){
+},{}],237:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -39436,13 +39450,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],237:[function(require,module,exports){
+},{}],238:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":235,"./encode":236}],238:[function(require,module,exports){
+},{"./decode":236,"./encode":237}],239:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -40176,7 +40190,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":239,"punycode":234,"querystring":237}],239:[function(require,module,exports){
+},{"./util":240,"punycode":235,"querystring":238}],240:[function(require,module,exports){
 'use strict';
 
 module.exports = {

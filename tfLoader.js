@@ -7,6 +7,10 @@ const modelList = {
   mobilenet: {
     modelPath: "./tensorflowModels/mobilenet_v1_1.0_224/model.json",
     imageClasses: "./tensorflowModels/mobilenet_v1_1.0_224/imagenetClasses.json"
+  },
+
+  inception:{
+
   }
 };
 

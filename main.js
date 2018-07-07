@@ -1,8 +1,4 @@
-const tf = require('@tensorflow/tfjs');
-const Brain = require('./tfLoader').Brain;
-
-
-let predict;
+const server = require("./server").server;
 
 // converts an image located at url into it's base64 encoded representation. can be a local file or other file as long as the origin allows CORS
 var convertToBase64 = function (url) {
@@ -83,7 +79,7 @@ const predictFromClick = async (event)=>{
   const hd64 = await convertToBase64(image);
   const time = Date.now();
   console.log('Predicting...')
-  const predictions = await predict(hd64);
+  const predictions = await server.predict(hd64);
   const duration = Date.now()-time;
   console.log(predictions)
   console.log(`Prediction completed in ${Math.floor(duration)}ms`);
@@ -103,10 +99,7 @@ const predictFromClick = async (event)=>{
 
 //console.log(mobilenet);
 window.onload = async ()=>{
-
-  const brain = new Brain();
-  await brain.loadTensor("mobilenet");
-  predict =  brain.predictFromBase64.bind(brain);
+  server.init();
   var huskyimg = document.createElement('img')
   huskyimg.src ='husky.jpg'
   document.body.appendChild(huskyimg)
